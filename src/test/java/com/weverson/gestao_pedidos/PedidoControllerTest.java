@@ -75,4 +75,21 @@ public class PedidoControllerTest {
                 .content(jsonInvalido))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    public void deveRetornarPedidoPorIdQuandoExistir() throws Exception {
+        Pedido pedidoSalvo = pedidoRepository.save(new Pedido(null, "Carlos", 300.00));
+
+        mockMvc.perform(get("/pedidos/" + pedidoSalvo.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(pedidoSalvo.getId()))
+                .andExpect(jsonPath("$.cliente").value("Carlos"))
+                .andExpect(jsonPath("$.valorTotal").value(300.00));
+    }
+
+    @Test
+    public void deveRetornarStatus404QuandoPedidoNaoExistir() throws Exception {
+        mockMvc.perform(get("/pedidos/999"))
+                .andExpect(status().isNotFound());
+    }
 }
