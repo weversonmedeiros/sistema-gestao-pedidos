@@ -3,6 +3,7 @@ package com.weverson.gestao_pedidos;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,11 +33,20 @@ public class PedidoController {
         return pedidoRepository.save(pedido);
     }
 
-    // --- NOVA ROTA ADICIONADA AQUI ---
     @GetMapping("/pedidos/{id}")
     public ResponseEntity<Pedido> buscarPedidoPorId(@PathVariable Long id) {
         return pedidoRepository.findById(id)
-                .map(pedido -> ResponseEntity.ok(pedido)) // Retorna 200 OK se encontrar
-                .orElse(ResponseEntity.notFound().build()); // Retorna 404 Not Found se não achar
+                .map(pedido -> ResponseEntity.ok(pedido))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // --- NOVA ROTA DE DELETE ADICIONADA AQUI ---
+    @DeleteMapping("/pedidos/{id}")
+    public ResponseEntity<Void> deletarPedido(@PathVariable Long id) {
+        if (pedidoRepository.existsById(id)) {
+            pedidoRepository.deleteById(id);
+            return ResponseEntity.noContent().build(); // 204 No Content
+        }
+        return ResponseEntity.notFound().build(); // 404 Not Found
     }
 }

@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
 @SpringBootTest(classes = GestaoPedidosApplication.class)
 @AutoConfigureMockMvc
@@ -90,6 +91,20 @@ public class PedidoControllerTest {
     @Test
     public void deveRetornarStatus404QuandoPedidoNaoExistir() throws Exception {
         mockMvc.perform(get("/pedidos/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void deveRetornarStatus204AoDeletarPedidoExistente() throws Exception {
+        Pedido pedidoSalvo = pedidoRepository.save(new Pedido(null, "Ana", 450.00));
+
+        mockMvc.perform(delete("/pedidos/" + pedidoSalvo.getId()))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void deveRetornarStatus404AoTentarDeletarPedidoInexistente() throws Exception {
+        mockMvc.perform(delete("/pedidos/999"))
                 .andExpect(status().isNotFound());
     }
 }
