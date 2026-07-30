@@ -7,62 +7,63 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping; // <-- NOVO IMPORT
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
+@RequestMapping("/pedidos")
 public class PedidoController {
 
-    private final PedidoRepository pedidoRepository;
+    private final PedidoService pedidoService;
 
-    public PedidoController(PedidoRepository pedidoRepository) {
-        this.pedidoRepository = pedidoRepository;
+    public PedidoController(PedidoService pedidoService) {
+        this.pedidoService = pedidoService;
     }
 
-    @GetMapping("/pedidos")
+    @GetMapping
     public List<Pedido> listarPedidos() {
-        return pedidoRepository.findAll();
+        return pedidoService.listarTodos();
     }
 
-    @PostMapping("/pedidos")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Pedido criarPedido(@Valid @RequestBody Pedido pedido) {
-        return pedidoRepository.save(pedido);
+        return pedidoService.criar(pedido);
     }
 
-    @GetMapping("/pedidos/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<Pedido> buscarPedidoPorId(@PathVariable Long id) {
-        return pedidoRepository.findById(id)
-                .map(pedido -> ResponseEntity.ok(pedido))
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Pedido> pedido = pedidoService.buscarPorId(id);
+        
+        // Uso do IF clássico no lugar do .map().orElse()
+        if (pedido.isPresent()) {
+            return ResponseEntity.ok(pedido.get());
+        }
+        return ResponseEntity.notFound().build();
     }
 
-    @DeleteMapping("/pedidos/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarPedido(@PathVariable Long id) {
-        if (pedidoRepository.existsById(id)) {
-            pedidoRepository.deleteById(id);
+        if (pedidoService.deletar(id)) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
     }
 
-    // --- NOVA ROTA DE ATUALIZAÇÃO ADICIONADA AQUI ---
-    @PutMapping("/pedidos/{id}")
-    public ResponseEntity<Pedido> atualizarPedido(@PathVariable Long id, @Valid @RequestBody Pedido dadosAtualizados) {
-        return pedidoRepository.findById(id)
-                .map(pedidoExistente -> {
-                    // Atualiza os dados
-                    pedidoExistente.setCliente(dadosAtualizados.getCliente());
-                    pedidoExistente.setValorTotal(dadosAtualizados.getValorTotal());
-                    
-                    // Salva no banco e retorna 200 OK
-                    Pedido pedidoSalvo = pedidoRepository.save(pedidoExistente);
-                    return ResponseEntity.ok(pedidoSalvo);
-                })
-                .orElse(ResponseEntity.notFound().build()); // 404 Not Found se não existir
+    @PutMapping("/{id}")
+    public ResponseEntity<Pedido> atualizarPedido(@PathVariable Long id, @Valid @RequestBody Pedido dados) {
+        Optional<Pedido> pedidoAtualizado = pedidoService.atualizar(id, dados);
+        
+        // Uso do IF clássico no lugar do .map().orElse()
+        if (pedidoAtualizado.isPresent()) {
+            return ResponseEntity.ok(pedidoAtualizado.get());
+        }
+        return ResponseEntity.notFound().build();
     }
 }
