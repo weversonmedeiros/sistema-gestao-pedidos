@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 @SpringBootTest(classes = GestaoPedidosApplication.class)
 @AutoConfigureMockMvc
@@ -107,4 +108,38 @@ public class PedidoControllerTest {
         mockMvc.perform(delete("/pedidos/999"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+public void deveAtualizarPedidoExistenteERetornarStatus200() throws Exception {
+    Pedido pedidoSalvo = pedidoRepository.save(new Pedido(null, "Lucas", 100.00));
+    
+    String jsonAtualizado = """
+        {
+            "cliente": "Lucas Silva",
+            "valorTotal": 150.00
+        }
+        """;
+
+    mockMvc.perform(put("/pedidos/" + pedidoSalvo.getId())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(jsonAtualizado))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.cliente").value("Lucas Silva"))
+            .andExpect(jsonPath("$.valorTotal").value(150.00));
+}
+
+@Test
+public void deveRetornarStatus404AoTentarAtualizarPedidoInexistente() throws Exception {
+    String jsonAtualizado = """
+        {
+            "cliente": "Fantasma",
+            "valorTotal": 50.00
+        }
+        """;
+
+    mockMvc.perform(put("/pedidos/999")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(jsonAtualizado))
+            .andExpect(status().isNotFound());
+}
 }

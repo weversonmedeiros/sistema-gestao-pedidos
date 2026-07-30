@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping; // <-- NOVO IMPORT
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,13 +41,28 @@ public class PedidoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // --- NOVA ROTA DE DELETE ADICIONADA AQUI ---
     @DeleteMapping("/pedidos/{id}")
     public ResponseEntity<Void> deletarPedido(@PathVariable Long id) {
         if (pedidoRepository.existsById(id)) {
             pedidoRepository.deleteById(id);
-            return ResponseEntity.noContent().build(); // 204 No Content
+            return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.notFound().build(); // 404 Not Found
+        return ResponseEntity.notFound().build();
+    }
+
+    // --- NOVA ROTA DE ATUALIZAÇÃO ADICIONADA AQUI ---
+    @PutMapping("/pedidos/{id}")
+    public ResponseEntity<Pedido> atualizarPedido(@PathVariable Long id, @Valid @RequestBody Pedido dadosAtualizados) {
+        return pedidoRepository.findById(id)
+                .map(pedidoExistente -> {
+                    // Atualiza os dados
+                    pedidoExistente.setCliente(dadosAtualizados.getCliente());
+                    pedidoExistente.setValorTotal(dadosAtualizados.getValorTotal());
+                    
+                    // Salva no banco e retorna 200 OK
+                    Pedido pedidoSalvo = pedidoRepository.save(pedidoExistente);
+                    return ResponseEntity.ok(pedidoSalvo);
+                })
+                .orElse(ResponseEntity.notFound().build()); // 404 Not Found se não existir
     }
 }
